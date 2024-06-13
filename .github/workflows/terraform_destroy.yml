@@ -23,6 +23,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2 # Specify your AWS region
 
+      - name: Debug AWS CLI Configuration
+        run: aws sts get-caller-identity
+
       - name: Initialize Terraform for IAM Attachments
         run: terraform init -backend-config="path=iam_policy_attachments.tfstate"
 
@@ -53,10 +56,13 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2 # Specify your AWS region
+          aws-region: ap-south-1 # Specify your AWS region
 
       - name: Update kubeconfig
-        run: aws eks --region <your-region> update-kubeconfig --name <your-cluster-name>
+        run: aws eks --region ap-south-1 update-kubeconfig --name webapp
+
+      - name: Debug kubeconfig
+        run: kubectl config view
 
       - name: Apply AWS EBS CSI Driver
         run: kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.31"
