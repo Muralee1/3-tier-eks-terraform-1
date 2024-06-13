@@ -23,14 +23,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2 # Specify your AWS region
 
-      - name: Initialize Terraform
+      - name: Initialize Terraform for IAM Attachments
+        run: terraform init -backend-config="path=iam_policy_attachments.tfstate"
+
+      - name: Plan Terraform Destroy for IAM Attachments
+        run: terraform plan -destroy -out=destroy_iam.tfplan -target=aws_iam_policy_attachment.eks_cluster_attachment -target=aws_iam_policy_attachment.eks_nodegroup_attachment
+
+      - name: Apply Terraform Destroy for IAM Attachments
+        run: terraform apply -auto-approve destroy_iam.tfplan
+
+      - name: Initialize Terraform for Remaining Resources
         run: terraform init
 
       - name: Validate Terraform
         run: terraform validate
 
-      - name: Plan Terraform Destroy
+      - name: Plan Terraform Destroy for Remaining Resources
         run: terraform plan -destroy -out=destroy.tfplan
 
-      - name: Apply Terraform Destroy
+      - name: Apply Terraform Destroy for Remaining Resources
         run: terraform apply -auto-approve destroy.tfplan
