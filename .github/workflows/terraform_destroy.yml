@@ -27,7 +27,7 @@ jobs:
         run: aws sts get-caller-identity
 
       - name: Initialize Terraform for IAM Attachments
-        run: terraform init -backend-config="path=iam_policy_attachments.tfstate"
+        run: terraform init
 
       - name: Refresh Terraform State for IAM Attachments
         run: terraform refresh -target=aws_iam_policy_attachment.eks_cluster_attachment -target=aws_iam_policy_attachment.eks_nodegroup_attachment
@@ -63,3 +63,4 @@ jobs:
 
       - name: Apply Terraform Destroy for Remaining Resources
         run: terraform apply -auto-approve destroy.tfplan
+
