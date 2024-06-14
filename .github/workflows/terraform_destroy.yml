@@ -21,7 +21,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1 # Specify your AWS region
+          aws-region: us-west-2 # Specify your AWS region
 
       - name: Empty S3 Bucket
         run: |
@@ -34,15 +34,21 @@ jobs:
         run: terraform init
 
       - name: Apply Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: terraform destroy -auto-approve 
 
       - name: Clean up Kubernetes resources
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name ${{ secrets.CLUSTER_NAME }}
           git clone https://github.com/fredritchie/3-tier-eks-manifests.git
           cd 3-tier-eks-manifests
-          kubectl delete -f frontend_deployment.yaml
-          kubectl delete -f backend.yaml
-          kubectl delete -f service.yaml
-          kubectl delete -f secret.yaml
-          kubectl delete -f database.yaml
+
+          # Function to safely delete Kubernetes resources
+          delete_resource() {
+            kubectl delete -f $1 || echo "Failed to delete $1. It may not exist."
+          }
+
+          delete_resource frontendCICD.yaml
+          delete_resource backend.yaml
+          delete_resource service.yaml
+          delete_resource secret.yaml
+          delete_resource database.yaml
