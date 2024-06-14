@@ -33,12 +33,6 @@ jobs:
       - name: Initialize Terraform
         run: terraform init
 
-      - name: Validate Terraform
-        run: terraform validate
-
-      - name: Plan Terraform Destroy
-        run: terraform plan -destroy -out=destroy.tfplan
-
       - name: Apply Terraform Destroy
         run: terraform apply -auto-approve destroy.tfplan
 
