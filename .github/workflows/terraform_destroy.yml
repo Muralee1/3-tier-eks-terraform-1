@@ -34,7 +34,7 @@ jobs:
         run: terraform init
 
       - name: Apply Terraform Destroy
-        run: terraform destroy 
+        run: terraform destroy -auto-approve
 
       - name: Clean up Kubernetes resources
         run: |
