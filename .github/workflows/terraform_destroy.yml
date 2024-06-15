@@ -23,19 +23,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1 # Specify your AWS region
 
-      - name: Empty S3 Bucket
-        run: |
-          aws s3 rm s3://hypha-webslinger --recursive
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Initialize Terraform
+        run: terraform init
 
-      - name: Terraform Init and Destroy - 3-tier-eks-terraform-1
-        working-directory: ./3-tier-eks-terraform-1
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        run: |
-          terraform init 
-          terraform destroy -auto-approve
+      - name: Validate Terraform
+        run: terraform validate
 
+      - name: Plan Terraform Destroy
+        run: terraform plan -destroy -out=destroy.tfplan
+
+      - name: Apply Terraform Destroy
+        run: terraform apply -auto-approve destroy.tfplan
