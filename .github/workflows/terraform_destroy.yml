@@ -30,25 +30,12 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Initialize Terraform
-        run: terraform init
-
-      - name: Apply Terraform Destroy
-        run: terraform destroy -auto-approve 
-
-      - name: Clean up Kubernetes resources
+      - name: Terraform Init and Destroy - 3-tier-eks-terraform-1
+        working-directory: ./3-tier-eks-terraform-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name ${{ secrets.CLUSTER_NAME }}
-          git clone https://github.com/fredritchie/3-tier-eks-manifests.git
-          cd 3-tier-eks-manifests
+          terraform init -input=false
+          terraform destroy -auto-approve
 
-          # Function to safely delete Kubernetes resources
-          delete_resource() {
-            kubectl delete -f $1 || echo "Failed to delete $1. It may not exist."
-          }
-
-          delete_resource frontendCICD.yaml
-          delete_resource backend.yaml
-          delete_resource service.yaml
-          delete_resource secret.yaml
-          delete_resource database.yaml
