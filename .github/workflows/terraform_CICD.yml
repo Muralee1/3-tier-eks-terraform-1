@@ -5,8 +5,8 @@ name: Terraform CI/CD
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - main  # Or your desired deployment branch
+  workflow_dispatch:  # Manual trigger
 
 permissions:
   id-token: write
@@ -16,7 +16,7 @@ jobs:
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
-    environment: production
+    environment: production  # Or the environment you want to deploy to (e.g., staging)
 
     steps:
       - name: Checkout
@@ -25,7 +25,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.8.1
+          terraform_version: 1.8.1  # Specify the Terraform version (e.g., 1.3.0)
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -34,23 +34,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
-      - name: Import Existing IAM Roles and Policies
-        run: |
-          terraform import aws_iam_role.EKS_Cluster_Role EKS_Cluster_Role
-          terraform import aws_iam_role.AmazonEKSNodeRole AmazonEKSNodeRole
-          terraform import aws_iam_policy.create_delete_ebs_policy create_delete_ebs_policy
-
       - name: Terraform Init
-        run: terraform init -reconfigure 
+        run: |
+          terraform init -reconfigure
+          terraform workspace select production  # Optional: Select Terraform workspace
+          terraform validate  # Optional: Validate Terraform configuration
+          terraform fmt -check -diff  # Optional: Check Terraform formatting
 
       - name: Terraform Plan
-        run: terraform plan
-        continue-on-error: true
+        run: |
+          terraform plan -input=false -out=tfplan
+          terraform show -json tfplan > tfplan.json
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: |
+          terraform apply -auto-approve tfplan
+          rm tfplan
 
-      - name: Install EBS CSI Driver and Kubernetes Manifests
+      - name: Install EBS CSI Driver
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name ${{ secrets.CLUSTER_NAME }}
           kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.31"
@@ -61,3 +62,4 @@ jobs:
           kubectl apply -f service.yaml
           kubectl apply -f secret.yaml
           kubectl apply -f database.yaml
+
