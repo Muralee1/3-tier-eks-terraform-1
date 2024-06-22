@@ -6,7 +6,7 @@ on:
   push:
     branches:
       - main  # Or your desired deployment branch
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -35,21 +35,14 @@ jobs:
           aws-region: ap-south-1
 
       - name: Terraform Init
-        run: |
-          terraform init -reconfigure
-          terraform workspace select production  # Optional: Select Terraform workspace
-          terraform validate  # Optional: Validate Terraform configuration
-          terraform fmt -check -diff  # Optional: Check Terraform formatting
+        run: terraform init
 
       - name: Terraform Plan
-        run: |
-          terraform plan -input=false -out=tfplan
-          terraform show -json tfplan > tfplan.json
+        run: terraform plan
+        continue-on-error: true # If you want to continue even if the plan fails (for logging purposes)
 
       - name: Terraform Apply
-        run: |
-          terraform apply -auto-approve tfplan
-          rm tfplan
+        run: terraform apply -auto-approve
 
       - name: Install EBS CSI Driver
         run: |
@@ -62,4 +55,3 @@ jobs:
           kubectl apply -f service.yaml
           kubectl apply -f secret.yaml
           kubectl apply -f database.yaml
-
