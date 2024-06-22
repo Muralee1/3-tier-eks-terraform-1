@@ -41,7 +41,7 @@ jobs:
           terraform import aws_iam_policy.create_delete_ebs_policy create_delete_ebs_policy
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -reconfigure 
 
       - name: Terraform Plan
         run: terraform plan
