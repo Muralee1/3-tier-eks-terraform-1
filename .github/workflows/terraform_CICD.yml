@@ -5,7 +5,7 @@ name: Terraform CI/CD
 on:
   push:
     branches:
-      - main  # Or your desired deployment branch
+      - main
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      - name: Import Existing IAM Roles and Policies
+        run: |
+          terraform import aws_iam_role.EKS_Cluster_Role EKS_Cluster_Role
+          terraform import aws_iam_role.AmazonEKSNodeRole AmazonEKSNodeRole
+          terraform import aws_iam_policy.create_delete_ebs_policy create_delete_ebs_policy
+
       - name: Terraform Init
         run: terraform init
 
@@ -44,7 +50,7 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
-      - name: Install EBS CSI Driver
+      - name: Install EBS CSI Driver and Kubernetes Manifests
         run: |
           aws eks --region ${{ secrets.AWS_REGION }} update-kubeconfig --name ${{ secrets.CLUSTER_NAME }}
           kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.31"
@@ -55,10 +61,3 @@ jobs:
           kubectl apply -f service.yaml
           kubectl apply -f secret.yaml
           kubectl apply -f database.yaml
-
-      # Additional steps to import existing IAM roles and policies if needed
-      - name: Import Existing IAM Roles and Policies
-        run: |
-          terraform import aws_iam_role.EKS_Cluster_Role role_id_for_EKS_Cluster_Role
-          terraform import aws_iam_role.AmazonEKSNodeRole role_id_for_AmazonEKSNodeRole
-          terraform import aws_iam_policy.create_delete_ebs_policy policy_id_for_create_delete_ebs_policy
