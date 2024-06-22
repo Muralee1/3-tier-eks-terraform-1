@@ -16,7 +16,7 @@ jobs:
   terraform:
     name: Terraform
     runs-on: ubuntu-latest
-    environment: production  # Or the environment you want to deploy to (e.g., staging)
+    environment: production
 
     steps:
       - name: Checkout
@@ -25,7 +25,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.8.1  # Specify the Terraform version (e.g., 1.3.0)
+          terraform_version: 1.8.1
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -39,7 +39,7 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan
-        continue-on-error: true # If you want to continue even if the plan fails (for logging purposes)
+        continue-on-error: true
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
@@ -56,3 +56,9 @@ jobs:
           kubectl apply -f secret.yaml
           kubectl apply -f database.yaml
 
+      # Additional steps to import existing IAM roles and policies if needed
+      - name: Import Existing IAM Roles and Policies
+        run: |
+          terraform import aws_iam_role.EKS_Cluster_Role role_id_for_EKS_Cluster_Role
+          terraform import aws_iam_role.AmazonEKSNodeRole role_id_for_AmazonEKSNodeRole
+          terraform import aws_iam_policy.create_delete_ebs_policy policy_id_for_create_delete_ebs_policy
